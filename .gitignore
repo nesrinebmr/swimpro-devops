@@ -1,0 +1,7 @@
+.env
+*.sql.gz
+*.log
+vendor/
+node_modules/
+.idea/
+.vscode/
