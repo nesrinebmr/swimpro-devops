@@ -1,0 +1,32 @@
+name: PHP CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/auth-comptes
+      - feature/auth-comptes-v2
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  php-lint:
+    name: Vérification syntaxe PHP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Vérifier les fichiers PHP
+        run: |
+          find . -type f -name "*.php" \
+            -not -path "./.git/*" \
+            -print0 | xargs -0 -n1 php -l
