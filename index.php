@@ -6,17 +6,17 @@ $u=current_user(); $role=$u['role'];
 $allowed=['admin','organisateur','club','officiel','nageur','entraineur'];
 if(!in_array($role,$allowed,true)) { http_response_code(403); exit('Rôle inconnu'); }
 $page=$_GET['page']??'dashboard';
-$admin=['dashboard','competitions','clubs','swimmers','events','entries','heats','results','users','supervision'];
-$organizer=['dashboard','competitions','events','entries','heats','results','supervision'];
-$official=['dashboard','heats','results','supervision'];
-$club=['dashboard','my_swimmers','entries','results'];
-$swimmer=['dashboard','my_profile','results','heats'];
-$coach=['dashboard','my_swimmers','entries','results','heats'];
+$admin=['dashboard','competitions','clubs','swimmers','events','entries','relays','heats','results','rankings','users','settings','supervision'];
+$organizer=['dashboard','competitions','events','entries','relays','heats','results','rankings','settings','supervision'];
+$official=['dashboard','heats','results','rankings','supervision'];
+$club=['dashboard','my_swimmers','entries','relays','results','rankings'];
+$swimmer=['dashboard','my_profile','results','heats','rankings'];
+$coach=['dashboard','my_swimmers','entries','relays','results','heats','rankings'];
 $permissions=['admin'=>$admin,'organisateur'=>$organizer,'officiel'=>$official,'club'=>$club,'nageur'=>$swimmer,'entraineur'=>$coach];
 if(!in_array($page,$permissions[$role],true)) { http_response_code(403); $page='dashboard'; flash('Vous ne pouvez pas accéder à cette page.','error'); }
 
 function count_query(string $sql,array $args=[]): int { $s=db()->prepare($sql);$s->execute($args);return (int)$s->fetchColumn(); }
-function page_title($p){$a=['dashboard'=>'Tableau de bord','competitions'=>'Compétitions','clubs'=>'Clubs','swimmers'=>'Nageurs','events'=>'Épreuves','entries'=>'Engagements','heats'=>'Séries et couloirs','results'=>'Résultats','users'=>'Utilisateurs','supervision'=>'Supervision — Résultats live','my_swimmers'=>'Mes nageurs','my_profile'=>'Mon profil'];return $a[$p]??'SwimPro';}
+function page_title($p){$a=['dashboard'=>'Tableau de bord','competitions'=>'Compétitions','clubs'=>'Clubs','swimmers'=>'Nageurs','events'=>'Épreuves','entries'=>'Engagements','heats'=>'Séries et couloirs','results'=>'Résultats','users'=>'Utilisateurs','supervision'=>'Supervision — Résultats live','my_swimmers'=>'Mes nageurs','my_profile'=>'Mon profil','relays'=>'Relais','rankings'=>'Classements et points','settings'=>'Paramètres'];return $a[$p]??'SwimPro';}
 $flash=take_flash();
 ?>
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=e(page_title($page))?> — SwimPro</title><link rel="stylesheet" href="assets/style.css"><script defer src="assets/app.js"></script></head>
@@ -38,12 +38,15 @@ if($page==='dashboard'):
 ?>
 <section class="welcome"><div><span class="eyebrow">BIENVENUE SUR SWIMPRO</span><h2>Suivez chaque course, de l'engagement au podium.</h2><p>Une gestion claire des compétitions, des séries et des performances.</p><a class="btn primary" href="index.php?page=<?=in_array($role,['admin','organisateur'])?'competitions':($role==='nageur'?'my_profile':(in_array($role,['club','entraineur'])?'my_swimmers':'supervision'))?>">Accéder aux activités</a></div><div class="pool-art">〰<br><span>SWIMPRO LIVE</span></div></section>
 <div class="stats"><?php foreach($cards as $c): ?><div class="stat"><span><?=e($c[0])?></span><strong><?=e($c[1])?></strong></div><?php endforeach; ?></div>
-<div class="grid2"><section class="panel"><h3>Prochaines compétitions</h3><?php $q=db()->query("SELECT * FROM competitions WHERE event_date>=CURDATE() ORDER BY event_date LIMIT 5");$rows=$q->fetchAll();if(!$rows)echo '<p class="muted">Aucune compétition programmée pour le moment.</p>';foreach($rows as $r):?><div class="list-row"><div><b><?=e($r['name'])?></b><small><?=e($r['venue'])?> · <?=e($r['event_date'])?></small></div><span class="pill"><?=e($r['status'])?></span></div><?php endforeach;?></section><section class="panel"><h3>Accès rapide</h3><div class="quick-links"><?php if(in_array($role,['admin','organisateur','officiel'])):?><a href="index.php?page=supervision">Supervision live</a><?php endif;?><a href="public.php">Résultats publics</a><?php if(in_array($role,['admin','organisateur'])):?><a href="index.php?page=entries">Gestion des engagements</a><a href="index.php?page=heats">Générer les séries</a><?php endif;?></div></section></div>
+<div class="grid2"><section class="panel"><h3>Prochaines compétitions</h3><?php $q=db()->query("SELECT * FROM competitions WHERE event_date>=CURDATE() ORDER BY event_date LIMIT 5");$rows=$q->fetchAll();if(!$rows)echo '<p class="muted">Aucune compétition programmée pour le moment.</p>';foreach($rows as $r):?><div class="list-row"><div><b><?=e($r['name'])?></b><small><?=e($r['venue'])?> · <?=e($r['event_date'])?></small></div><span class="pill"><?=e($r['status'])?></span></div><?php endforeach;?></section><section class="panel"><h3>Accès rapide</h3><div class="quick-links"><?php if(in_array($role,['admin','organisateur','officiel'])):?><a href="index.php?page=supervision">Supervision live</a><?php endif;?><a href="public.php">Résultats publics</a><?php if(in_array($role,['admin','organisateur'])):?><a href="index.php?page=entries">Gestion des engagements</a><a href="index.php?page=heats">Générer les séries</a><a href="index.php?page=relays">Composer les relais</a><?php endif;?><a href="index.php?page=rankings">Classements et points</a></div></section></div>
 <?php elseif($page==='competitions'): require __DIR__.'/pages/competitions.php';
 elseif($page==='clubs'): require __DIR__.'/pages/clubs.php';
 elseif($page==='swimmers'||$page==='my_swimmers'): require __DIR__.'/pages/swimmers.php';
 elseif($page==='events'): require __DIR__.'/pages/events.php';
 elseif($page==='entries'): require __DIR__.'/pages/entries.php';
+elseif($page==='relays'): require __DIR__.'/pages/relays.php';
+elseif($page==='rankings'): require __DIR__.'/pages/rankings.php';
+elseif($page==='settings'): require __DIR__.'/pages/settings.php';
 elseif($page==='heats'): require __DIR__.'/pages/heats.php';
 elseif($page==='results'): require __DIR__.'/pages/results.php';
 elseif($page==='supervision'): require __DIR__.'/pages/supervision.php';

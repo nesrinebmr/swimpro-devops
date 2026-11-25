@@ -18,3 +18,9 @@ function parse_time(string $value): ?float { $value=trim($value);if($value==='')
 function can_access_club(int $clubId): bool { $u=current_user();if(!$u)return false;if(in_array($u['role']??'', ['admin','organisateur','officiel'],true))return true;return (int)($u['club_id']??0)>0&&(int)$u['club_id']===$clubId; }
 function can_access_swimmer(int $swimmerId): bool { $u=current_user();if(!$u)return false;if(in_array($u['role']??'', ['admin','organisateur','officiel'],true))return true;if(($u['role']??'')==='nageur')return (int)($u['swimmer_id']??0)===$swimmerId;if(in_array($u['role']??'', ['club','entraineur'],true)){$q=db()->prepare('SELECT club_id FROM swimmers WHERE id=?');$q->execute([$swimmerId]);$cid=$q->fetchColumn();return $cid!==false&&$cid!==null&&(int)($u['club_id']??0)>0&&(int)$cid===(int)$u['club_id'];}return false; }
 function record_club_membership(PDO $pdo,int $swimmerId,?int $newClubId): void { $q=$pdo->prepare('SELECT id,club_id FROM swimmer_club_history WHERE swimmer_id=? AND left_on IS NULL ORDER BY joined_on DESC,id DESC LIMIT 1');$q->execute([$swimmerId]);$current=$q->fetch();$old=$current?(int)$current['club_id']:null;if($old===$newClubId)return;if($current){$pdo->prepare('UPDATE swimmer_club_history SET left_on=CURDATE() WHERE id=?')->execute([$current['id']]);}if($newClubId!==null&&$newClubId>0){$pdo->prepare('INSERT INTO swimmer_club_history(swimmer_id,club_id,joined_on) VALUES(?,?,CURDATE())')->execute([$swimmerId,$newClubId]);} }
+
+// Fonctions ajoutées : migration automatique de la base, catégories, séries, finales, points, exports.
+require_once __DIR__.'/lib/migrate.php';
+require_once __DIR__.'/lib/swimpro.php';
+require_once __DIR__.'/lib/export.php';
+ensure_schema();
