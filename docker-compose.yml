@@ -1,0 +1,41 @@
+
+services:
+  web:
+    build: .
+    container_name: swimpro_web
+    ports:
+      - "8081:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: swimpro
+      DB_USER: swimpro_user
+      DB_PASS: change_me
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/var/www/html
+
+  db:
+    image: mysql:8.0
+    container_name: swimpro_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: swimpro
+      MYSQL_USER: swimpro_user
+      MYSQL_PASSWORD: change_me
+      MYSQL_ROOT_PASSWORD: change_me_too
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+      interval: 5s
+      start_period: 20s
+
+volumes:
+  db_data:
